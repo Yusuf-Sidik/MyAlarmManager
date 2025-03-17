@@ -1,12 +1,18 @@
 package com.example.myalarmmanager
 
 import android.app.AlarmManager
+import android.app.NotificationChannel
+import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.media.RingtoneManager
+import android.os.Build
 import android.util.Log
 import android.widget.Toast
+import androidx.core.app.NotificationCompat
+import androidx.core.content.ContextCompat
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Locale
@@ -14,6 +20,13 @@ import java.util.Locale
 class AlarmReceiver : BroadcastReceiver() {
 
     override fun onReceive(context: Context, intent: Intent) {
+        val type = intent.getStringExtra(EXTRA_TYPE)
+        val message = intent.getStringExtra(EXTRA_MESSAGE)
+        val title = if (type.equals(TYPE_ONE_TIME,ignoreCase = true)) TYPE_ONE_TIME else TYPE_REPEATING
+        val notifId = if (type.equals(TYPE_ONE_TIME,ignoreCase = true)) ID_ONETIME else ID_REPEATING
+        if (message != null){
+            showAlarmNotification(context,title,message,notifId)
+        }
     }
 
     fun setOneTimeAlarm(context: Context, type: String, date: String, time: String, message: String) {
@@ -37,6 +50,32 @@ class AlarmReceiver : BroadcastReceiver() {
         alarmManager.set(AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent)
 
         Toast.makeText(context, "One time alarm set up", Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showAlarmNotification(context: Context, title: String, message: String, notifId: Int){
+        val channelId = "Channel_1"
+        val channelName = "AlarmManager channel"
+        val notificationManagerCompat = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        val builder = NotificationCompat.Builder(context,channelId)
+            .setSmallIcon(R.drawable.ic_access_time)
+            .setContentTitle(title)
+            .setContentText(message)
+            .setColor(ContextCompat.getColor(context,android.R.color.transparent))
+            .setVibrate(longArrayOf(1000,1000,1000,1000,1000))
+            .setSound(alarmSound)
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val channel = NotificationChannel(channelId,
+                channelName,
+                NotificationManager.IMPORTANCE_DEFAULT)
+            channel.enableVibration(true)
+            channel.vibrationPattern = longArrayOf(1000, 1000, 1000, 1000, 1000)
+            builder.setChannelId(channelId)
+            notificationManagerCompat.createNotificationChannel(channel)
+        }
+
+        val notification = builder.build()
+        notificationManagerCompat.notify(notifId, notification)
 
     }
 
