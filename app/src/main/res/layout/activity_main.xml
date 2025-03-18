@@ -120,7 +120,7 @@
         android:orientation="horizontal">
 
         <Button
-            android:id="@+id/btn_cancel_alarm"
+            android:id="@+id/btn_cancel_repeating_alarm"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
